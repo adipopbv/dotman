@@ -1,2 +1,3 @@
 # dotman
-A linux dotfiles manager written in go!
+
+A linux dotfiles manager written in python!
