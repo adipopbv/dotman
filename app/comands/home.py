@@ -1,4 +1,10 @@
+import os
+
 import click
+import git
+
+from app.domain.errors import DuplicateError
+from app.utils.config import AppConfig
 
 
 @click.group(name='home', help='Dotfiles home related commands')
@@ -7,21 +13,40 @@ def home():
 
 
 @home.command(name='init', help='Initialize a new dotfiles home and git repository')
-@click.option('--no-git', is_flag=False, help='Do not initialize a git repository')
-def init_home_and_repo():
+@click.option('--empty', is_flag=True, help='Initialize an empty dotfiles home')
+def init_home_and_repo(empty=False):
     """
     Initialize a new dotfiles home and git repository
     :return: None
     """
     click.echo('Initializing a new dotfiles home and git repository...\n')
 
+    if os.path.exists(os.path.expanduser(AppConfig().config['DEFAULT']['DOTFILESHOME'])):
+        raise DuplicateError('A dotfiles home already exists')
+    click.echo('Creating dotfiles home directory...')
+    os.makedirs(os.path.expanduser(AppConfig().config['DEFAULT']['DOTFILESHOME']))
+    if not empty:
+        click.echo('Creating configurations directory...')
+        os.makedirs(os.path.expanduser(AppConfig().config['DEFAULT']['DOTFILESCONFIGS']))
+    click.echo('Initializing git repository...')
+    git.Repo.init(os.path.expanduser(AppConfig().config['DEFAULT']['DOTFILESHOME']))
 
-@home.command(name='clone', help='Clone an existent dotfiles home from git')
+    click.echo('\nDotfiles home initialized successfully')
+
+
+@home.command(name='get', help='Get an existent dotfiles home from git')
 @click.argument('url')
-def clone_home_from_git(url):
+def get_home_from_git(url):
     """
-    Clone an existent dotfiles home from git
+    Get an existent dotfiles home from git
     :param url: The url of the git repository
     :return: None
     """
-    click.echo('Cloning an existent dotfiles home from git...\n')
+    click.echo('Getting an existent dotfiles home from git...\n')
+
+    if os.path.exists(os.path.expanduser(AppConfig().config['DEFAULT']['DOTFILESHOME'])):
+        raise DuplicateError('A dotfiles home already exists')
+    click.echo('Cloning git repository...')
+    git.Repo.clone_from(url, os.path.expanduser(AppConfig().config['DEFAULT']['DOTFILESHOME']))
+
+    click.echo('\nDotfiles home cloned successfully')

@@ -2,6 +2,8 @@ import os
 
 import click
 
+from app.domain.errors import NotFoundError
+from app.domain.validations import valid_dotfiles_home
 from app.utils.config import AppConfig
 
 
@@ -11,6 +13,7 @@ def configurations():
 
 
 @configurations.command(name='list', help='List all available configurations')
+@valid_dotfiles_home
 def list_all_configurations():
     """
     List all available configurations
@@ -18,14 +21,33 @@ def list_all_configurations():
     """
     click.echo('Listing all available configurations...\n')
     try:
-        print([config_name for config_name in
-               os.listdir(os.path.expanduser(AppConfig().config['DEFAULT']['DOTFILESPATH'] + '/configs'))])
-    except FileNotFoundError:
-        if not os.path.exists(os.path.expanduser(AppConfig().config['DEFAULT']['DOTFILESPATH'])):
-            click.echo('No dotfiles home directory structure found')
-            click.echo('You can create a new dotfiles home with the command: dotman home init')
-            click.echo(
-                'Or you can get your already existent dotfiles home from git with the command: dotman home clone <url>')
-        else:
+        if len(os.listdir(os.path.expanduser(AppConfig().config['DEFAULT']['DOTFILESCONFIGS']))) == 0:
             click.echo('No configurations found')
-            click.echo('Create a new configuration with the command: config create <name>')
+            return
+        [print(config_name) for config_name in
+         os.listdir(os.path.expanduser(AppConfig().config['DEFAULT']['DOTFILESCONFIGS']))]
+    except FileNotFoundError:
+        raise NotFoundError('No configurations directory found')
+
+
+@configurations.command(name='create', help='Create a new configuration')
+@click.argument('name')
+@valid_dotfiles_home
+def create_new_configuration(name):
+    """
+    Create a new configuration
+    :param name: The name of the new configuration
+    :return: None
+    """
+    click.echo('Creating a new configuration...\n')
+    if not os.path.exists(os.path.expanduser(f"{AppConfig().config['DEFAULT']['DOTFILESCONFIGS']}/{name}")):
+        click.echo('Creating configuration directory...')
+        os.makedirs(os.path.expanduser(f"{AppConfig().config['DEFAULT']['DOTFILESCONFIGS']}/{name}"))
+    else:
+        click.echo('A configuration with the same name already exists')
+        click.echo('Do you want to overwrite it?')
+        if click.confirm('Overwrite?'):
+            click.echo('Overwriting configuration...')
+            os.makedirs(os.path.expanduser(f"{AppConfig().config['DEFAULT']['DOTFILESCONFIGS']}/{name}"), exist_ok=True)
+
+    click.echo('\nConfiguration created successfully')
