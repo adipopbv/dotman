@@ -20,4 +20,5 @@ if __name__ == '__main__':
     except AppError as e:
         click.echo(f'An error occurred: {str(e)}\n', err=True)
         click.echo(
-            f"For more information check the documentation at {AppConfig().config['DEFAULT']['DOCUMENTATIONLINK']}", err=True)
+            f"For more information check the documentation at {AppConfig().config['DEFAULT']['DocumentationUrl']}",
+            err=True)

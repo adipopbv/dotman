@@ -14,7 +14,7 @@ def valid_dotfiles_home(func):
 
     @functools.wraps(func)
     def wrapper_valid_dotfiles_home(*args, **kwargs):
-        exists_at_path(AppConfig().config['DEFAULT']['DOTFILESHOME'])
+        exists_at_path(AppConfig().config['DOTFILES']['HomePath'])
         return func(*args, **kwargs)
 
     def exists_at_path(dotfiles_path) -> None:

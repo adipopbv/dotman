@@ -1,9 +1,10 @@
 import os
 
 import click
+import distro
 import git
 
-from app.domain.errors import DuplicateError
+from app.domain.errors import DuplicateError, AppError
 from app.utils.config import AppConfig
 
 
@@ -21,15 +22,34 @@ def init_home_and_repo(empty=False):
     """
     click.echo('Initializing a new dotfiles home and git repository...\n')
 
-    if os.path.exists(os.path.expanduser(AppConfig().config['DEFAULT']['DOTFILESHOME'])):
+    if os.path.exists(os.path.expanduser(AppConfig().config['DOTFILES']['HomePath'])):
         raise DuplicateError('A dotfiles home already exists')
     click.echo('Creating dotfiles home directory...')
-    os.makedirs(os.path.expanduser(AppConfig().config['DEFAULT']['DOTFILESHOME']))
+    os.makedirs(os.path.expanduser(AppConfig().config['DOTFILES']['HomePath']))
     if not empty:
         click.echo('Creating configurations directory...')
-        os.makedirs(os.path.expanduser(AppConfig().config['DEFAULT']['DOTFILESCONFIGS']))
+        os.makedirs(os.path.expanduser(AppConfig().config['DOTFILES']['ConfigsPath']))
+
+        click.echo('Creating current configuration directory...')
+        os.makedirs(os.path.expanduser(AppConfig().config['DOTFILES']['CurrentConfigPath']))
+
+        click.echo('Creating packages directory...')
+        os.makedirs(os.path.expanduser(AppConfig().config['DOTFILES']['PackagesPath']))
+        open(os.path.expanduser(f"{AppConfig().config['DOTFILES']['PackagesPath']}/fedora-dnf.txt"), 'a').close()
+        open(os.path.expanduser(f"{AppConfig().config['DOTFILES']['PackagesPath']}/flatpak.txt"), 'a').close()
+        current_distro = distro.id()
+        if current_distro not in AppConfig().config['PACKAGES']['SupportedDistros'].split(','):
+            raise AppError(f'Unsupported distro: {current_distro}')
+        # os.system('sudo dnf update -y')
+        # os.system(
+        #     "sudo dnf install -y $(cat {AppConfig().config['DOTFILES']['PackagesPath']}/fedora-dnf.txt) > /dev/null "
+        #     "2>&1")
+
+        click.echo('Creating scripts directory...')
+        os.makedirs(os.path.expanduser(AppConfig().config['DOTFILES']['ScriptsPath']))
+
     click.echo('Initializing git repository...')
-    git.Repo.init(os.path.expanduser(AppConfig().config['DEFAULT']['DOTFILESHOME']))
+    git.Repo.init(os.path.expanduser(AppConfig().config['DOTFILES']['HomePath']))
 
     click.echo('\nDotfiles home initialized successfully')
 
